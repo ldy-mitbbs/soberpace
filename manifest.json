@@ -1,0 +1,22 @@
+{
+  "name": "SoberPace - 酒精浓度代谢与饮酒控速助手",
+  "short_name": "SoberPace",
+  "description": "实时估算血液酒精浓度并为下一次饮用提供科学建议的个人助手，避免次日宿醉。",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a0b10",
+  "theme_color": "#0a0b10",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
