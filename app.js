@@ -58,7 +58,7 @@ function calculateWatsonR() {
     
     let tbw = 0;
     if (profile.gender === 'male') {
-        tbw = 2.447 - (0.09516 * age) + (0.1074 * hCm) + (0.3362 * wKg);
+        tbw = 2.447 - (0.09156 * age) + (0.1074 * hCm) + (0.3362 * wKg);
     } else {
         // Female Watson formula
         tbw = -2.097 + (0.1069 * hCm) + (0.2466 * wKg);
@@ -174,7 +174,7 @@ function updatePacingExplanation() {
 
     explainBox.innerHTML = `
         <div style="font-weight: 600; margin-bottom: 5px; color: var(--accent-purple); display: flex; align-items: center; gap: 4px;">🔬 智能计算原理与参数拆解</div>
-        <p style="margin: 0 0 6px 0; font-size: 11.5px; color: var(--text-secondary);">系统连续模拟饮用标准杯（14g 纯酒精，相当于 330ml 5% 啤酒）的代谢曲线，以寻找能保证您的 BAC 峰值低于安全上限 <strong>${displayLimit}</strong> 的安全物理间隔。</p>
+        <p style="margin: 0 0 6px 0; font-size: 11.5px; color: var(--text-secondary);">系统连续模拟饮用标准杯（14g 纯酒精，相当于 355ml / 12oz 5% 啤酒）的代谢曲线，以寻找能保证您的 BAC 峰值低于安全上限 <strong>${displayLimit}</strong> 的安全物理间隔。</p>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 6px; font-family: monospace; font-size: 11.5px;">
             <div>• 单杯 BAC 增幅: <span style="color: var(--accent-purple); font-weight: bold;">+${displayDelta}</span></div>
             <div>• 酒精消除率 (β): <span style="color: var(--accent-purple); font-weight: bold;">${displayBeta}</span></div>
@@ -231,7 +231,7 @@ function runBacSimulation(drinksList, simProfile) {
     // Calculate Watson r factor
     let tbw = 0;
     if (simProfile.gender === 'male') {
-        tbw = 2.447 - (0.09516 * simProfile.age) + (0.1074 * hCm) + (0.3362 * wKg);
+        tbw = 2.447 - (0.09156 * simProfile.age) + (0.1074 * hCm) + (0.3362 * wKg);
     } else {
         tbw = -2.097 + (0.1069 * hCm) + (0.2466 * wKg);
     }

@@ -96,7 +96,7 @@ $$BAC(t) = \frac{A_{\text{absorbed}}(t) - A_{\text{eliminated}}(t)}{W \times r \
 Widmark 因子 $r$ 在传统计算中男女分别固定为 `0.68` 和 `0.55`。但由于每个人的体脂率不同，全身水分占比（TBW，Total Body Water）千差万别。本项目引入 **Watson 经验公式** 计算人体的全身水分体积 (升)：
 
 - **男性 Watson 公式**：
-  $$TBW_{\text{male}} = 2.447 - 0.09516 \times \text{Age} + 0.1074 \times \text{Height(cm)} + 0.3362 \times \text{Weight(kg)}$$
+  $$TBW_{\text{male}} = 2.447 - 0.09156 \times \text{Age} + 0.1074 \times \text{Height(cm)} + 0.3362 \times \text{Weight(kg)}$$
 - **女性 Watson 公式**：
   $$TBW_{\text{female}} = -2.097 + 0.1069 \times \text{Height(cm)} + 0.2466 \times \text{Weight(kg)}$$
 

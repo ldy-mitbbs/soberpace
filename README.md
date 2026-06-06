@@ -45,7 +45,7 @@
 
 ### 1. 人体水分比例计算 (Watson 公式)
 基于性别、年龄、身高、体重，动态估算人体总水分（TBW），进而得到水重比 $r$（血液酒精浓度与体液酒精浓度的换算系数）：
-- **男性**: $TBW = 2.447 - 0.09516 \times \text{age} + 0.1074 \times \text{height} + 0.3362 \times \text{weight}$
+- **男性**: $TBW = 2.447 - 0.09156 \times \text{age} + 0.1074 \times \text{height} + 0.3362 \times \text{weight}$
 - **女性**: $TBW = -2.097 + 0.1069 \times \text{height} + 0.2466 \times \text{weight}$
 - **水重比** $r = TBW / (0.8 \times \text{weight})$
 
