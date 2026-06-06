@@ -210,6 +210,16 @@ body {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* Space out stacked content (e.g. description text above an action button)
+   inside a card body. The global `* { margin: 0 }` reset otherwise leaves
+   paragraphs and buttons touching. Inline gap/padding on a specific
+   .card-body still wins over this base rule. */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
 /* Tab Switching Control */
 .tab-content {
     display: none;
@@ -1054,19 +1064,29 @@ body {
 }
 
 /* Beer Pacing Selector Widget styling */
-.beer-selector-card {
+/* Shared layout for both beer & wine quick-select panels.
+   (Previously only .beer-selector-card had this, leaving the wine panel
+    with zero vertical spacing between its rows and the log button.) */
+.quick-selector-panel {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     margin-bottom: 8px;
 }
 
+/* Extra breathing room before the primary log CTA */
+.quick-selector-panel .btn-block {
+    margin-top: 2px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+}
+
 .selector-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .selector-label {
