@@ -832,16 +832,21 @@ function renderGlance(now) {
     // Still counting down – arm the notification for when it reaches zero
     glance.notified = false;
 
+    document.title = `⏳ ${formatCountdownClock(diffMs)} · 下一杯`;
+    setGlanceBadge(Math.ceil(diffMs / 60000)); // remaining whole minutes
+}
+
+// Format a remaining-time duration (ms) as a compact clock string:
+// "1:23:45" when there are hours, otherwise "2:05". Non-positive -> "0:00".
+function formatCountdownClock(diffMs) {
+    if (diffMs <= 0) return '0:00';
     const totalSecs = Math.ceil(diffMs / 1000);
     const h = Math.floor(totalSecs / 3600);
     const m = Math.floor((totalSecs % 3600) / 60);
     const s = totalSecs % 60;
-    const clock = h > 0
+    return h > 0
         ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
         : `${m}:${s.toString().padStart(2, '0')}`;
-
-    document.title = `⏳ ${clock} · 下一杯`;
-    setGlanceBadge(Math.ceil(diffMs / 60000)); // remaining whole minutes
 }
 
 
@@ -1405,25 +1410,28 @@ function updateRBadge() {
 }
 
 // --- UI INTERACTIONS & EVENT LISTENERS ---
-document.addEventListener('DOMContentLoaded', () => {
-    initAuthSystem();
-    loadData();
-    initPasscodeSystem();
-    setupTabNavigation();
-    setupDrinkLogging();
-    setupSettingsPanel();
-    renderDrinkList();
-    renderArchiveList();
-    
-    // Start live updates (every second for the countdown timer and BAC recalculation)
-    updateMetricsAndForecast();
-    timerInterval = setInterval(() => {
-        updateMetricsAndForecast();
-    }, 1000);
+// Guarded so app.js can be require()'d in Node (e.g. for unit tests) without a DOM.
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initAuthSystem();
+        loadData();
+        initPasscodeSystem();
+        setupTabNavigation();
+        setupDrinkLogging();
+        setupSettingsPanel();
+        renderDrinkList();
+        renderArchiveList();
 
-    // Initial load sync
-    syncBadge();
-});
+        // Start live updates (every second for the countdown timer and BAC recalculation)
+        updateMetricsAndForecast();
+        timerInterval = setInterval(() => {
+            updateMetricsAndForecast();
+        }, 1000);
+
+        // Initial load sync
+        syncBadge();
+    });
+}
 
 // Sync the visual header badge reflecting active/sober state
 function syncBadge() {
@@ -1955,8 +1963,8 @@ function renderDrinkList() {
 }
 
 // --- ARCHIVES AND SESSION RESET LOGIC ---
-const endSessionBtn = document.getElementById('btn-end-session');
-endSessionBtn.addEventListener('click', () => {
+const endSessionBtn = typeof document !== 'undefined' && document.getElementById('btn-end-session');
+if (endSessionBtn) endSessionBtn.addEventListener('click', () => {
     if (drinks.length === 0) {
         alert('当前没有可结束的饮酒记录。');
         return;
@@ -2147,7 +2155,7 @@ function renderArchiveList() {
 }
 
 // Clear all archived history
-const clearArchivesBtn = document.getElementById('btn-clear-archives');
+const clearArchivesBtn = typeof document !== 'undefined' && document.getElementById('btn-clear-archives');
 if (clearArchivesBtn) {
     clearArchivesBtn.addEventListener('click', async () => {
         if (archives.length === 0) return;
@@ -2167,7 +2175,7 @@ if (clearArchivesBtn) {
 }
 
 // Export all drinks to CSV
-const exportCsvBtn = document.getElementById('btn-export-csv');
+const exportCsvBtn = typeof document !== 'undefined' && document.getElementById('btn-export-csv');
 if (exportCsvBtn) {
     exportCsvBtn.addEventListener('click', () => {
         // Helper to find BAC at a specific time in a simulation timeline
@@ -2827,5 +2835,23 @@ function triggerPasscodeError(title, promptText) {
         if (dotsContainer) dotsContainer.classList.remove('shake');
         resetPasscodeVerification();
     }, 800);
+}
+
+// --- NODE EXPORTS (for unit tests; no-op in the browser) ---
+// `profile` is exported by reference so tests can mutate its properties to
+// exercise the functions that read the module-global profile.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        profile,
+        getWeightInKg,
+        getHeightInCm,
+        calculateWatsonR,
+        getKa,
+        calculateAlcoholGrams,
+        gramsToStandardDrinks,
+        calculateScientificPacingInterval,
+        runBacSimulation,
+        formatCountdownClock,
+    };
 }
 
