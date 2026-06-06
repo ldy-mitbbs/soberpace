@@ -20,6 +20,14 @@ let archives = []; // Past archived sessions
 let currentTab = 'tab-dashboard';
 let timerInterval = null;
 
+// --- GLANCEABLE COUNTDOWN STATE (tab title / app badge / ready notification) ---
+let glance = {
+    readyAt: null,   // ms timestamp when the next drink becomes safe; null = no active session
+    notified: true,  // whether the "ready" alert already fired for the current window (true = suppress)
+};
+let swRegistration = null; // service worker registration, used for background notifications
+const DEFAULT_TITLE = 'SoberPace - 实时酒精代谢与控速助手';
+
 // --- UNIT CONVERSIONS ---
 function getWeightInKg() {
     if (profile.weightUnit === 'lbs') {
@@ -422,6 +430,10 @@ function updateMetricsAndForecast() {
         
         // Clear chart
         drawChart([]);
+
+        // No active session: reset glanceable countdown outputs
+        glance.readyAt = null;
+        renderGlance(now);
         return;
     }
 
@@ -581,6 +593,9 @@ function updateMetricsAndForecast() {
 
     // 6. Draw the BAC trend chart
     drawChart(timeline);
+
+    // 7. Update glanceable countdown (tab title / app badge / ready notification)
+    renderGlance(now);
 }
 
 // Calculates next drink pacing instructions
@@ -650,7 +665,10 @@ function updatePacingAdvice(currentBac, now) {
     //    - Time when physical pacing limit is cleared (e.g. 60 minutes after last drink)
     const physicalPacingTime = lastDrinkTime + pacingTimeMs;
     const finalRecommendedTime = Math.max(safeMetabolicTime, physicalPacingTime);
-    
+
+    // Expose the recommended time as the single source of truth for the glanceable countdown
+    glance.readyAt = finalRecommendedTime;
+
     const adviceCard = document.getElementById('advice-card');
     const countdownEl = document.getElementById('advice-countdown');
     const descEl = document.getElementById('advice-description');
@@ -739,6 +757,91 @@ function testDrinkPeakNow() {
         }
     }
     return peak;
+}
+
+
+// --- GLANCEABLE COUNTDOWN: tab title, PWA app badge, and ready notification ---
+
+// Whether the user has opted into "ready" push notifications (per-device, like the unit setting)
+function notificationsEnabled() {
+    return localStorage.getItem('soberpace_notify') === '1';
+}
+
+// Set or clear the PWA app-icon badge (installed PWA on supported platforms only)
+function setGlanceBadge(count) {
+    if (!('setAppBadge' in navigator)) return;
+    try {
+        if (count > 0) {
+            navigator.setAppBadge(count).catch(() => {});
+        } else {
+            navigator.clearAppBadge().catch(() => {});
+        }
+    } catch (e) {
+        /* Badging API unsupported – ignore */
+    }
+}
+
+// Fire a system notification when it becomes safe to have the next drink
+function fireReadyNotification() {
+    if (!notificationsEnabled()) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const title = '🍷 可以喝下一杯了';
+    const options = {
+        body: '体内代谢已降至安全线，距上一杯也已满间隔。想续杯请记得先点击记录。',
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: 'soberpace-next-drink',
+        renotify: true,
+    };
+    try {
+        // Prefer the service worker so the alert shows even when the tab is in the background
+        if (swRegistration && swRegistration.showNotification) {
+            swRegistration.showNotification(title, options);
+        } else {
+            new Notification(title, options);
+        }
+    } catch (e) {
+        /* ignore */
+    }
+}
+
+// Render the countdown to all glanceable outputs. Reads glance.readyAt (set by updatePacingAdvice).
+function renderGlance(now) {
+    // No active session – reset everything
+    if (glance.readyAt === null) {
+        document.title = DEFAULT_TITLE;
+        setGlanceBadge(0);
+        glance.notified = true; // nothing pending, suppress any future stale alert
+        return;
+    }
+
+    const diffMs = glance.readyAt - now;
+
+    if (diffMs <= 0) {
+        // Safe to drink now
+        document.title = '✅ 可以喝下一杯了 · SoberPace';
+        setGlanceBadge(0);
+        if (!glance.notified) {
+            fireReadyNotification();
+            glance.notified = true;
+        }
+        return;
+    }
+
+    // Still counting down – arm the notification for when it reaches zero
+    glance.notified = false;
+
+    const totalSecs = Math.ceil(diffMs / 1000);
+    const h = Math.floor(totalSecs / 3600);
+    const m = Math.floor((totalSecs % 3600) / 60);
+    const s = totalSecs % 60;
+    const clock = h > 0
+        ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+        : `${m}:${s.toString().padStart(2, '0')}`;
+
+    document.title = `⏳ ${clock} · 下一杯`;
+    setGlanceBadge(Math.ceil(diffMs / 60000)); // remaining whole minutes
 }
 
 
@@ -2376,6 +2479,50 @@ function setupSettingsPanel() {
         radio.addEventListener('change', syncProfileFromUI);
     });
 
+    // Next-drink "ready" notification toggle (per-device preference)
+    const notifyEl = document.getElementById('settings-notify');
+    const notifyStatusEl = document.getElementById('notify-status');
+
+    function refreshNotifyStatus() {
+        if (!notifyStatusEl) return;
+        if (!('Notification' in window)) {
+            notifyStatusEl.textContent = '当前浏览器不支持系统通知（标签页标题与角标倒计时仍然可用）。';
+            if (notifyEl) notifyEl.disabled = true;
+            return;
+        }
+        const on = notificationsEnabled() && Notification.permission === 'granted';
+        if (notifyEl) notifyEl.checked = on;
+        if (Notification.permission === 'denied') {
+            notifyStatusEl.textContent = '通知权限已被拒绝，请到浏览器/系统设置中手动允许后再开启。';
+        } else if (on) {
+            notifyStatusEl.textContent = '已开启：到点会推送系统通知；倒计时也会显示在标签页标题和手机 App 图标角标上。';
+        } else {
+            notifyStatusEl.textContent = '未开启。开启后到了可安全饮用的时间会推送系统通知。';
+        }
+    }
+
+    if (notifyEl) {
+        notifyEl.addEventListener('change', async () => {
+            if (notifyEl.checked) {
+                if (!('Notification' in window)) return;
+                let perm = Notification.permission;
+                if (perm === 'default') {
+                    perm = await Notification.requestPermission();
+                }
+                if (perm === 'granted') {
+                    localStorage.setItem('soberpace_notify', '1');
+                } else {
+                    notifyEl.checked = false;
+                    localStorage.removeItem('soberpace_notify');
+                }
+            } else {
+                localStorage.removeItem('soberpace_notify');
+            }
+            refreshNotifyStatus();
+        });
+        refreshNotifyStatus();
+    }
+
     // Factory Reset App button
     const resetBtn = document.getElementById('btn-factory-reset');
     if (resetBtn) {
@@ -2394,9 +2541,14 @@ function setupSettingsPanel() {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+            .then(reg => {
+                swRegistration = reg;
+                console.log('Service Worker registered successfully:', reg.scope);
+            })
             .catch(err => console.log('Service Worker registration failed:', err));
     });
+    // Ensure we have a usable registration for background notifications even on warm loads
+    navigator.serviceWorker.ready.then(reg => { swRegistration = reg; }).catch(() => {});
 }
 
 // --- PASSCODE LOCK SYSTEM ---

@@ -443,6 +443,18 @@
                             </label>
                             <input type="number" id="settings-decay-rate" class="form-control" value="0.015" step="0.001" min="0.008" max="0.030">
                         </div>
+
+                        <div class="form-group">
+                            <label>
+                                下一杯到点提醒
+                                <span class="label-help">距下一杯的倒计时会一直显示在浏览器标签页标题和手机 App 图标角标上，随时一看即知。开启下方开关后，到了可安全饮用的时间还会推送一条系统通知。</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; font-size: 14px; color: var(--text-primary); margin-top: 6px;">
+                                <input type="checkbox" id="settings-notify" style="accent-color: var(--accent-purple); width: 16px; height: 16px;">
+                                开启到点推送通知
+                            </label>
+                            <div id="notify-status" style="font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;"></div>
+                        </div>
                     </div>
                 </div>
 
