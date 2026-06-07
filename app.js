@@ -1595,12 +1595,14 @@ function setupDrinkLogging() {
             btn.classList.add('active');
 
             const type = btn.getAttribute('data-type');
+            // Use 'flex' (not 'block') so the .quick-selector-panel flex layout —
+            // and therefore its row `gap` — stays in effect when a panel is shown.
             if (type === 'beer') {
-                if (panelBeer) panelBeer.style.display = 'block';
+                if (panelBeer) panelBeer.style.display = 'flex';
                 if (panelWine) panelWine.style.display = 'none';
             } else {
                 if (panelBeer) panelBeer.style.display = 'none';
-                if (panelWine) panelWine.style.display = 'block';
+                if (panelWine) panelWine.style.display = 'flex';
             }
         });
     });

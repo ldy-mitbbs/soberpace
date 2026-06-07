@@ -1,4 +1,4 @@
-const CACHE_NAME = 'soberpace-cache-v32';
+const CACHE_NAME = 'soberpace-cache-v33';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -49,28 +49,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Network-first, cache-fallback: always try the network so code/style updates
+  // take effect immediately; fall back to the cache only when offline. (Previously
+  // this was cache-first, which made every deploy require a manual cache clear.)
   event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        return fetch(event.request).then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          
-          // Cache newly loaded resources dynamically
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
-          
-          return networkResponse;
-        }).catch(() => {
-          // Offline fallback could go here
-        });
+        }
+        return networkResponse;
       })
+      .catch(() => caches.match(event.request)) // offline -> serve last cached copy
   );
 });
