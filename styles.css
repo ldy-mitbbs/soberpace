@@ -1070,17 +1070,18 @@ body {
 .quick-selector-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 22px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    padding: 20px;
     margin-bottom: 8px;
 }
 
 /* Extra breathing room before the primary log CTA */
 .quick-selector-panel .btn-block {
-    margin-top: 2px;
-    padding-top: 13px;
-    padding-bottom: 13px;
+    margin-top: 6px;
+    padding-top: 14px;
+    padding-bottom: 14px;
 }
 
 .selector-row {
