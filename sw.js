@@ -1,4 +1,4 @@
-const CACHE_NAME = 'soberpace-cache-v33';
+const CACHE_NAME = 'soberpace-cache-v34';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
