@@ -1070,7 +1070,7 @@ body {
 .quick-selector-panel {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     padding: 16px;
